@@ -1,9 +1,9 @@
-from .models import Machine, Retail, Shop, User
+from .models import Machine, Retail, Shop, User, Transaction
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import connection
-from .serializers import MachineSerializer, RetailSerializer, ShopSerializer, UserSerializer, VerifyPasswordSerializer
+from .serializers import MachineSerializer, RetailSerializer, ShopSerializer, TransactionSerializer, UserSerializer, VerifyPasswordSerializer
 
 
 class MachineViewSet(viewsets.ModelViewSet):
@@ -103,6 +103,51 @@ class ShopViewSet(viewsets.ModelViewSet):
         
         return super().list(request, *args, **kwargs)
 
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = Transaction.objects.all()
+    permission_classes = [permissions.AllowAny]
+    serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+
+        queryset = super().get_queryset()
+
+        userId = self.request.query_params.get('userId')
+        clientType = self.request.query_params.get('clientType')
+        date = self.request.query_params.get('date')
+        month = self.request.query_params.get('month')
+        year = self.request.query_params.get('year')
+
+        if userId:
+            queryset = queryset.filter(userId=userId)
+        if clientType:
+            queryset = queryset.exclude(clientType=clientType)
+
+        if month and year:
+            queryset = queryset.extra(
+                where=["EXTRACT(YEAR FROM (date AT TIME ZONE 'America/Guayaquil')) = %s"],
+                params=[int(year)]
+            )
+            queryset = queryset.extra(
+                where=["EXTRACT(MONTH FROM (date AT TIME ZONE 'America/Guayaquil')) = %s"],
+                params=[int(month)]
+            )
+
+        elif year:
+            queryset = queryset.extra(
+                where=["EXTRACT(YEAR FROM (date AT TIME ZONE 'America/Guayaquil')) = %s"],
+                params=[int(year)]
+            )
+
+        elif date:
+            queryset = queryset.extra(
+                where=["((date AT TIME ZONE 'America/Guayaquil'))::date = %s"],
+                params=[date]
+            )
+
+        return queryset
+    
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
