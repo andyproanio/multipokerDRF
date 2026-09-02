@@ -115,7 +115,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         userId = self.request.query_params.get('userId')
         clientType = self.request.query_params.get('clientType')
-        date = self.request.query_params.get('date')
+        initDate = self.request.query_params.get('initDate')
+        endDate = self.request.query_params.get('endDate')
         month = self.request.query_params.get('month')
         year = self.request.query_params.get('year')
 
@@ -140,14 +141,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 params=[int(year)]
             )
 
-        elif date:
+        elif initDate and endDate:
             queryset = queryset.extra(
-                where=["((date AT TIME ZONE 'America/Guayaquil'))::date = %s"],
-                params=[date]
+                where=["((date AT TIME ZONE 'America/Guayaquil'))::date BETWEEN %s AND %s"],
+                params=[initDate, endDate]
             )
 
         return queryset
-    
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
