@@ -2,7 +2,7 @@ from .models import Machine, Retail, Shop, User, Transaction
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db import connection
+from django.db import connection, models
 from .serializers import MachineSerializer, RetailSerializer, ShopSerializer, TransactionSerializer, UserSerializer, VerifyPasswordSerializer
 
 
@@ -115,13 +115,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
         userId = self.request.query_params.get('userId')
         clientType = self.request.query_params.get('clientType')
+        clientName = self.request.query_params.get('clientName')
         initDate = self.request.query_params.get('initDate')
         endDate = self.request.query_params.get('endDate')
         month = self.request.query_params.get('month')
         year = self.request.query_params.get('year')
 
-        if userId:
-            queryset = queryset.filter(userId=userId)
+        if userId and clientName:
+            queryset = queryset.filter(models.Q(userId=userId) | models.Q(client=clientName))
         if clientType:
             queryset = queryset.exclude(clientType=clientType)
 
